@@ -1,7 +1,5 @@
-// app.js
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const path = require('path');
 const navbarRoutes = require('./routes/navbar');
 const imageRoutes = require('./routes/image');
@@ -14,81 +12,77 @@ const answerRoutes = require('./routes/answer');
 const interviewQuestionRoutes = require('./routes/interviewQuestion');
 const sequelize = require('./db');
 const cors = require('cors');
+const setCacheControl = require('./middleware/cacheControl');
 const basicAuth = require('./middleware/auth');
 const cron = require('node-cron');
 const { cache, refreshCache, initializeCache } = require('./cacheManager');
+const compression = require('compression');
+const helmet = require('helmet');
 
 const app = express();
 
 // Schedule the cache refresh to run every 24 hours
-// cron.schedule('* * * * *') to run every 1 hours
 cron.schedule('0 0 * * *', async () => {
     console.log('Scheduled cache refresh at', new Date());
-    await refreshCache();
+    try {
+        await refreshCache();
+    } catch (error) {
+        console.error('Error refreshing cache:', error);
+    }
 });
 
 // Initial cache population on startup
 initializeCache();
 
-app.use(cors());
-app.use(bodyParser.json());
+const corsOptions = {
+  origin: ['https://alphatutor.org', 'https://content.alphatutor.org', 'http://localhost:3000'],  // allow both production and local dev
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],  // <== Add 'Cache-Control' here
+  optionsSuccessStatus: 204,
+  maxAge: 86400 // 24 hours
+};
+
+app.use(cors(corsOptions));
+
+app.use(compression());
+app.use(express.json());
+app.set('etag', 'strong');
+app.use(helmet());
 
 // Serve static files from the "uploads" directory
 app.use('/images', express.static(path.join(__dirname, 'uploads')));
 
-// Apply basicAuth middleware globally or to specific routes
-app.use('/api', basicAuth);
+// Conditionally apply basicAuth only for non-GET requests
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET') {
+    return next();
+  }
+  basicAuth(req, res, next);
+});
 
-// Pass cache instance to the routes
-app.use('/api/navbars', (req, res, next) => {
+// Helper to attach cache control and cache instance to routes
+const attachCachedRoute = (routePath, router) => {
+  app.use(routePath, setCacheControl(), (req, res, next) => {
     req.cache = cache;
     next();
-}, navbarRoutes);
+  }, router);
+};
 
-app.use('/api/sidebars', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, sidebarRoutes);
+attachCachedRoute('/api/navbars', navbarRoutes);
+attachCachedRoute('/api/sidebars', sidebarRoutes);
+attachCachedRoute('/api/bodyContents', bodyContentRoutes);
+attachCachedRoute('/api/quizzes', quizRoutes);
+attachCachedRoute('/api/choices', choiceRoutes);
+attachCachedRoute('/api/questions', questionRoutes);
+attachCachedRoute('/api/answers', answerRoutes);
+attachCachedRoute('/api/interviewQuestions', interviewQuestionRoutes);
+attachCachedRoute('/api/images', imageRoutes);
 
-app.use('/api/bodyContents', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, bodyContentRoutes);
+const PORT = process.env.PORT || 5001;
 
-app.use('/api/quizzes', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, quizRoutes);
-
-app.use('/api/choices', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, choiceRoutes);
-
-app.use('/api/questions', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, questionRoutes);
-
-app.use('/api/answers', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, answerRoutes);
-
-app.use('/api/interviewQuestions', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, interviewQuestionRoutes);
-
-app.use('/api/images', (req, res, next) => {
-    req.cache = cache;
-    next();
-}, imageRoutes);
-
-
-const PORT = process.env.PORT || 5000;
-
-sequelize.authenticate().then(() => {
+sequelize.authenticate()
+  .then(() => {
     console.log('Database connected...');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}).catch(err => console.log('Error: ' + err));
+  })
+  .catch(err => console.log('Error: ' + err));
