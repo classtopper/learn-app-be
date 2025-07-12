@@ -35,7 +35,7 @@ cron.schedule('0 0 * * *', async () => {
 initializeCache();
 
 const corsOptions = {
-  origin: ['https://alphatutor.org', 'https://content.alphatutor.org', 'http://localhost:3000'],  // allow both production and local dev
+  origin: ['https://alphatutor.org', 'http://localhost:3000'],  // allow both production and local dev
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control'],  // <== Add 'Cache-Control' here
   optionsSuccessStatus: 204,
@@ -47,7 +47,12 @@ app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json());
 app.set('etag', 'strong');
-app.use(helmet());
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 
 // Serve static files from the "uploads" directory
 app.use('/images', express.static(path.join(__dirname, 'uploads')));
