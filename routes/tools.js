@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
 const streamBuffers = require('stream-buffers');
-
+const { convertBuffer } = require('@lucasg04/docxtopdf');
 const router = express.Router();
 
 // Multer setup
@@ -21,49 +21,25 @@ const upload = multer({
 
 // ------------------- Word to PDF -------------------
 router.post('/convert-word-to-pdf', upload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const allowed = [
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+  if (!allowed.includes(file.mimetype)) {
+    return res.status(400).json({ error: 'Only Word files (DOC/DOCX) are allowed' });
+  }
+
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+    const pdfBuffer = await convertBuffer(file.buffer);
 
-    const allowedTypes = [
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    if (!allowedTypes.includes(file.mimetype)) {
-      return res.status(400).json({ error: 'Only Word files (DOC/DOCX) are allowed' });
-    }
-
-    // Save DOCX to temp file
-    const tmpDoc = tmp.fileSync({ postfix: '.docx' });
-    fs.writeFileSync(tmpDoc.name, file.buffer);
-
-    // Convert with LibreOffice
-    const outputDir = path.dirname(tmpDoc.name);
-    execFile('libreoffice', [
-      '--headless',
-      '--convert-to', 'pdf',
-      '--outdir', outputDir,
-      tmpDoc.name
-    ], (error) => {
-      if (error) {
-        console.error('LibreOffice error:', error);
-        return res.status(500).json({ error: 'Failed to convert Word to PDF' });
-      }
-
-      const pdfPath = tmpDoc.name.replace(/\.docx$/, '.pdf');
-      const pdfBuffer = fs.readFileSync(pdfPath);
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=converted.pdf');
-      res.send(pdfBuffer);
-
-      tmpDoc.removeCallback();
-      fs.unlinkSync(pdfPath);
-    });
-
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=converted.pdf');
+    res.send(Buffer.from(pdfBuffer));
   } catch (err) {
-    console.error('Word to PDF Error:', err.stack);
+    console.error('Conversion failed:', err);
     res.status(500).json({ error: 'Conversion failed', details: err.message });
   }
 });

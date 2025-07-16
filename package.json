@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@lucasg04/docxtopdf": "^1.0.1",
     "archiver": "^7.0.1",
     "body-parser": "^1.20.2",
     "compression": "^1.8.0",
