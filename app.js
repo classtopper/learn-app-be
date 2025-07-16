@@ -10,6 +10,7 @@ const choiceRoutes = require('./routes/choice');
 const questionRoutes = require('./routes/question');
 const answerRoutes = require('./routes/answer');
 const interviewQuestionRoutes = require('./routes/interviewQuestion');
+const toolsRoutes = require('./routes/tools');
 const sequelize = require('./db');
 const cors = require('cors');
 const setCacheControl = require('./middleware/cacheControl');
@@ -82,6 +83,7 @@ attachCachedRoute('/api/questions', questionRoutes);
 attachCachedRoute('/api/answers', answerRoutes);
 attachCachedRoute('/api/interviewQuestions', interviewQuestionRoutes);
 attachCachedRoute('/api/images', imageRoutes);
+attachCachedRoute('/api/tools', toolsRoutes);
 
 const PORT = process.env.PORT || 5001;
 
