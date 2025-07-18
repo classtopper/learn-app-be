@@ -11,6 +11,7 @@ const questionRoutes = require('./routes/question');
 const answerRoutes = require('./routes/answer');
 const interviewQuestionRoutes = require('./routes/interviewQuestion');
 const toolsRoutes = require('./routes/tools');
+const authRoutes = require('./routes/user');
 const sequelize = require('./db');
 const cors = require('cors');
 const setCacheControl = require('./middleware/cacheControl');
@@ -60,10 +61,23 @@ app.use('/images', express.static(path.join(__dirname, 'uploads')));
 
 // Conditionally apply basicAuth only for non-GET requests
 app.use('/api', (req, res, next) => {
+  // Skip auth for specific routes
+  if (req.method === 'DELETE' && req.path.startsWith('/users')) {
+    return next();
+  }
+  
+  // GET /api/users requires auth
+  if (req.method === 'GET' && req.path === '/users') {
+    return basicAuth(req, res, next);
+  }
+  
+  // Original logic for other routes
   if (req.method === 'GET') {
     return next();
   }
-  basicAuth(req, res, next);
+  
+  // All other non-GET requests require auth
+  return basicAuth(req, res, next);
 });
 
 // Helper to attach cache control and cache instance to routes
@@ -84,6 +98,7 @@ attachCachedRoute('/api/answers', answerRoutes);
 attachCachedRoute('/api/interviewQuestions', interviewQuestionRoutes);
 attachCachedRoute('/api/images', imageRoutes);
 attachCachedRoute('/api/tools', toolsRoutes);
+attachCachedRoute('/api/users', authRoutes);
 
 const PORT = process.env.PORT || 5001;
 
