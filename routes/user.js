@@ -1,55 +1,86 @@
 // routes/userAuth.js
 const express = require('express');
-const User = require('../models/user');
 const router = express.Router();
+const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-// Signup or Signin
-router.post('/auth', async (req, res) => {
-    try {
-        const { email, password, country } = req.body;
-        
-        if (!email || !password) {
-            return res.status(400).json({ 
-                error: 'Email, password, and country are required' 
-            });
-        }
+// Generate JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user.id, email: user.email, country: user.country },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
+  );
+};
 
-        // Check if user exists
-        let user = await User.findOne({ where: { email } });
+// @route   POST /auth/signup
+router.post('/signup', async (req, res) => {
+  try {
+    const { email, password, country } = req.body;
 
-        if (user) {
-            // Sign in
-            const isValid = await user.validPassword(password);
-            if (!isValid) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-        } else {
-            // Sign up
-            user = await User.create({ email, password, country });
-        }
-
-        // Create JWT token (24 hours expiration)
-        const token = jwt.sign(
-            { 
-                id: user.id, 
-                email: user.email,
-                country: user.country
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        // Return username and token
-        res.json({
-            token,
-            username: user.getUsername()
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+    if (!email || !password || !country) {
+      return res.status(400).json({ error: 'Email, password, and country are required' });
     }
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email is already registered' });
+    }
+
+    const user = await User.create({ email, password, country });
+    const token = generateToken(user);
+
+    res.json({
+      token,
+      username: user.getUsername(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST /auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found. Please sign up.' });
+    }
+
+    const isValid = await user.validPassword(password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const token = generateToken(user);
+    res.json({
+      token,
+      username: user.getUsername(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   GET /auth/check-email?email=someone@example.com
+router.get('/check-email', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const exists = await User.findOne({ where: { email } });
+    res.json({ exists: !!exists });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Token verification endpoint
@@ -152,7 +183,6 @@ router.put('/forgot-password', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 
 module.exports = router;

@@ -11,6 +11,7 @@ const questionRoutes = require('./routes/question');
 const answerRoutes = require('./routes/answer');
 const interviewQuestionRoutes = require('./routes/interviewQuestion');
 const toolsRoutes = require('./routes/tools');
+const generateRoutes = require('./routes/generate');
 const authRoutes = require('./routes/user');
 const sequelize = require('./db');
 const cors = require('cors');
@@ -99,6 +100,7 @@ attachCachedRoute('/api/interviewQuestions', interviewQuestionRoutes);
 attachCachedRoute('/api/images', imageRoutes);
 attachCachedRoute('/api/tools', toolsRoutes);
 attachCachedRoute('/api/users', authRoutes);
+attachCachedRoute('/api/generates', generateRoutes);
 
 const PORT = process.env.PORT || 5001;
 
