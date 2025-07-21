@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
 
         if (!cachedData) {
             const answers = await Answer.findAll({
-                attributes: ['id', 'title', 'questionId'], 
+                attributes: ['id', 'content', 'questionId'], 
                 order: [['id', 'ASC']] 
             });
 
@@ -36,7 +36,7 @@ router.post('/recache', async (req, res) => {
     const cacheKey = 'answers_data';
     try {
         const answers = await Answer.findAll({
-            attributes: ['id', 'title', 'questionId'], 
+            attributes: ['id', 'content', 'questionId'], 
             order: [['id', 'ASC']]  
         });
 

@@ -21,6 +21,9 @@ const cron = require('node-cron');
 const { cache, refreshCache, initializeCache } = require('./cacheManager');
 const compression = require('compression');
 const helmet = require('helmet');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load('./docs/swagger.yaml');
 
 const app = express();
 
@@ -103,6 +106,8 @@ attachCachedRoute('/api/users', authRoutes);
 attachCachedRoute('/api/generates', generateRoutes);
 
 const PORT = process.env.PORT || 5001;
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 sequelize.authenticate()
   .then(() => {

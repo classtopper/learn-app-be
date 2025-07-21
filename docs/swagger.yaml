@@ -1,0 +1,1616 @@
+openapi: 3.0.0
+info:
+  title: AlphaTutor API
+  version: 1.0.0
+  description: Centralized API documentation for AlphaTutor
+
+servers:
+  - url: http://localhost:5001/api
+    description: Local server
+  - url: https://alphatutor.org/api
+    description: Production server
+
+components:
+  schemas:
+
+    Navbar:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Main Navbar"
+        description:
+          type: string
+          nullable: true
+          example: "Description of navbar"
+      required:
+        - title
+
+    Sidebar:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Sidebar Title"
+        order:
+          type: integer
+          example: 2
+        navbarId:
+          type: integer
+          example: 1
+      required:
+        - title
+        - order
+
+    BodyContent:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        content:
+          type: string
+          example: "<p>Some HTML content here</p>"
+        sidebarId:
+          type: integer
+          example: 1
+      required:
+        - content
+
+    InterviewQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        question:
+          type: string
+          example: "What is your greatest strength?"
+        answer:
+          type: string
+          example: "My greatest strength is my perseverance."
+        navbarId:
+          type: integer
+          example: 1
+      required:
+        - question
+        - answer
+
+    Choice:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        optionText:
+          type: string
+          example: "Choice A"
+        quizId:
+          type: integer
+          example: 1
+      required:
+        - optionText
+
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        content:
+          type: string
+          example: "The answer content here."
+        questionId:
+          type: integer
+          example: 1
+      required:
+        - content
+
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "What is the capital of France?"
+      required:
+        - title
+
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        question:
+          type: string
+          example: "What is 2 + 2?"
+        correctAnswer:
+          type: string
+          example: "4"
+        navbarId:
+          type: integer
+          example: 1
+      required:
+        - question
+        - correctAnswer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          example: "hashed_password_here"
+        country:
+          type: string
+          example: "USA"
+      required:
+        - email
+        - password
+        - country
+
+paths:
+  /navbars:
+    get:
+      summary: Get all navbars
+      tags:
+        - Navbars
+      description: Returns a list of all navbars (cached)
+      responses:
+        '200':
+          description: A list of navbars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Navbar'
+
+    post:
+      summary: Create a new navbar
+      tags:
+        - Navbars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Navbar'
+      responses:
+        '200':
+          description: Navbar created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Navbar'
+
+  /navbars/recache:
+    post:
+      summary: Rebuild navbar cache
+      tags:
+        - Navbars
+      responses:
+        '200':
+          description: Navbars recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /navbars/{id}:
+    get:
+      summary: Get a navbar by ID
+      tags:
+        - Navbars
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A single navbar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Navbar'
+
+    put:
+      summary: Update a navbar by ID
+      tags:
+        - Navbars
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Navbar'
+      responses:
+        '200':
+          description: Navbar updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Navbar'
+
+    delete:
+      summary: Delete a navbar by ID
+      tags:
+        - Navbars
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Navbar deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+    /sidebars:
+    get:
+      summary: Get all sidebars
+      description: Returns a list of all sidebars, optionally filtered by navbarId
+      tags:
+        - Sidebars
+      parameters:
+        - in: query
+          name: navbarId
+          schema:
+            type: integer
+          description: Optional navbar ID to filter sidebars
+      responses:
+        '200':
+          description: A list of sidebars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sidebar'
+
+    post:
+      summary: Create a new sidebar
+      tags:
+        - Sidebars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sidebar'
+      responses:
+        '201':
+          description: Sidebar created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sidebar'
+
+  /sidebars/recache:
+    post:
+      summary: Rebuild sidebar cache
+      tags:
+        - Sidebars
+      responses:
+        '200':
+          description: Sidebars recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /sidebars/{id}:
+    put:
+      summary: Update a sidebar by ID
+      tags:
+        - Sidebars
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sidebar'
+      responses:
+        '200':
+          description: Sidebar updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sidebar'
+        '404':
+          description: Sidebar not found
+
+    delete:
+      summary: Delete a sidebar by ID
+      tags:
+        - Sidebars
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Sidebar deleted successfully
+        '404':
+          description: Sidebar not found
+    /bodyContents:
+    get:
+      summary: Get all body contents
+      description: Returns all body content entries, optionally filtered by sidebarId
+      tags:
+        - BodyContents
+      parameters:
+        - in: query
+          name: sidebarId
+          schema:
+            type: integer
+          description: Optional sidebar ID to filter body contents
+      responses:
+        '200':
+          description: A list of body content entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BodyContent'
+
+    post:
+      summary: Create a new body content entry
+      tags:
+        - BodyContents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodyContent'
+      responses:
+        '201':
+          description: Body content created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BodyContent'
+
+  /bodyContents/recache:
+    post:
+      summary: Rebuild body content cache
+      tags:
+        - BodyContents
+      responses:
+        '200':
+          description: Body content recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /bodyContents/{id}:
+    put:
+      summary: Update a body content entry by ID
+      tags:
+        - BodyContents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodyContent'
+      responses:
+        '200':
+          description: Body content updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BodyContent'
+        '404':
+          description: Body content not found
+
+    delete:
+      summary: Delete a body content entry by ID
+      tags:
+        - BodyContents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Body content deleted successfully
+        '404':
+          description: Body content not found
+
+    /interviewQuestions:
+    get:
+      summary: Get all interview questions
+      description: Returns all interview questions, optionally filtered by navbarId
+      tags:
+        - InterviewQuestions
+      parameters:
+        - in: query
+          name: navbarId
+          schema:
+            type: integer
+          description: Optional navbar ID to filter questions
+      responses:
+        '200':
+          description: A list of interview questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InterviewQuestion'
+
+    post:
+      summary: Create a new interview question
+      tags:
+        - InterviewQuestions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewQuestion'
+      responses:
+        '201':
+          description: Interview question created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewQuestion'
+
+  /interviewQuestions/recache:
+    post:
+      summary: Rebuild interview question cache
+      tags:
+        - InterviewQuestions
+      responses:
+        '200':
+          description: Interview questions recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /interviewQuestions/{id}:
+    put:
+      summary: Update an interview question by ID
+      tags:
+        - InterviewQuestions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewQuestion'
+      responses:
+        '200':
+          description: Interview question updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterviewQuestion'
+        '404':
+          description: Interview question not found
+
+    delete:
+      summary: Delete an interview question by ID
+      tags:
+        - InterviewQuestions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Interview question deleted
+        '404':
+          description: Interview question not found
+
+    /choices:
+    get:
+      summary: Get all choices
+      description: Returns all choices, optionally filtered by quizId
+      tags:
+        - Choices
+      parameters:
+        - in: query
+          name: quizId
+          schema:
+            type: integer
+          description: Optional quiz ID to filter choices
+      responses:
+        '200':
+          description: A list of choices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Choice'
+
+    post:
+      summary: Create a new choice
+      tags:
+        - Choices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Choice'
+      responses:
+        '201':
+          description: Choice created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Choice'
+
+  /choices/recache:
+    post:
+      summary: Rebuild choice cache
+      tags:
+        - Choices
+      responses:
+        '200':
+          description: Choices recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /choices/{id}:
+    put:
+      summary: Update a choice by ID
+      tags:
+        - Choices
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Choice'
+      responses:
+        '200':
+          description: Choice updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Choice'
+        '404':
+          description: Choice not found
+
+    delete:
+      summary: Delete a choice by ID
+      tags:
+        - Choices
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Choice deleted successfully
+        '404':
+          description: Choice not found
+  /quizzes:
+    get:
+      tags:
+        - Quizzes
+      summary: Get all quizzes (optionally filtered by navbarId)
+      parameters:
+        - in: query
+          name: navbarId
+          schema:
+            type: integer
+          required: false
+          description: Filter quizzes by navbarId
+      responses:
+        '200':
+          description: A list of quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Quiz'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      tags:
+        - Quizzes
+      summary: Create a new quiz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Quiz'
+      responses:
+        '201':
+          description: Quiz created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /quizzes/recache:
+    post:
+      tags:
+        - Quizzes
+      summary: Force recache of quizzes
+      responses:
+        '200':
+          description: Quizzes recached successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Quizzes recached successfully
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /quizzes/{id}:
+    put:
+      tags:
+        - Quizzes
+      summary: Update a quiz by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the quiz to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Quiz'
+      responses:
+        '200':
+          description: Quiz updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '404':
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Quiz not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    delete:
+      tags:
+        - Quizzes
+      summary: Delete a quiz by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the quiz to delete
+      responses:
+        '204':
+          description: Quiz deleted successfully, no content returned
+        '404':
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Quiz not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  
+  /tools/convert-word-to-pdf:
+    post:
+      tags:
+        - Tools
+      summary: Convert Word document (DOC/DOCX) to PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Word file to convert (DOC or DOCX)
+      responses:
+        '200':
+          description: PDF file returned
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request, e.g., missing or invalid file
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Conversion failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+
+  /tools/convert-pdf-to-word:
+    post:
+      tags:
+        - Tools
+      summary: Convert PDF document to Word (DOCX)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to convert
+      responses:
+        '200':
+          description: Word document returned
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request, e.g., missing or invalid file
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Conversion failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+
+  /tools/convert-image-to-pdf:
+    post:
+      tags:
+        - Tools
+      summary: Convert image (JPG/PNG) to PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file (JPG or PNG)
+      responses:
+        '200':
+          description: PDF file returned
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request, e.g., missing or unsupported file type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Conversion failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+
+  /tools/compress-file:
+    post:
+      tags:
+        - Tools
+      summary: Compress uploaded file into a ZIP archive
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to compress
+      responses:
+        '200':
+          description: ZIP archive returned
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request, e.g., no file uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Compression failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+
+  /question:
+    get:
+      tags:
+        - Questions
+      summary: Get all questions with caching
+      responses:
+        '200':
+          description: List of questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+        '500':
+          description: Server error
+
+    post:
+      tags:
+        - Questions
+      summary: Create a new question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+              required:
+                - title
+      responses:
+        '200':
+          description: Created question
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+        '500':
+          description: Server error
+
+  /question/recache:
+    post:
+      tags:
+        - Questions
+      summary: Force recache of questions
+      responses:
+        '200':
+          description: Recache success message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Server error
+
+  /question/{id}:
+    get:
+      tags:
+        - Questions
+      summary: Get a single question by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Question data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+        '404':
+          description: Question not found
+
+    put:
+      tags:
+        - Questions
+      summary: Update a question by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+      responses:
+        '200':
+          description: Updated question data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title:
+                    type: string
+        '404':
+          description: Question not found
+
+    delete:
+      tags:
+        - Questions
+      summary: Delete a question by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Deletion confirmation message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Question not found
+
+  /answer:
+    get:
+      tags:
+        - Answers
+      summary: Get all answers with optional filtering by questionId, with caching
+      parameters:
+        - in: query
+          name: questionId
+          schema:
+            type: integer
+          required: false
+          description: Filter answers by question ID
+      responses:
+        '200':
+          description: List of answers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    content:
+                      type: string
+                    questionId:
+                      type: integer
+        '500':
+          description: Server error
+
+    post:
+      tags:
+        - Answers
+      summary: Create a new answer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                questionId:
+                  type: integer
+              required:
+                - content
+                - questionId
+      responses:
+        '201':
+          description: Created answer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  questionId:
+                    type: integer
+        '500':
+          description: Server error
+
+  /answer/recache:
+    post:
+      tags:
+        - Answers
+      summary: Force recache of answers
+      responses:
+        '200':
+          description: Recache success message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Server error
+
+  /answer/{id}:
+    put:
+      tags:
+        - Answers
+      summary: Update an answer by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                questionId:
+                  type: integer
+      responses:
+        '200':
+          description: Updated answer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  content:
+                    type: string
+                  questionId:
+                    type: integer
+        '404':
+          description: Answer not found
+        '500':
+          description: Server error
+
+    delete:
+      tags:
+        - Answers
+      summary: Delete an answer by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Answer deleted successfully (no content)
+        '404':
+          description: Answer not found
+        '500':
+          description: Server error
+  /generates/favicon-image:
+    post:
+      tags:
+        - Generate
+      summary: Generate a favicon ZIP (with multiple sizes and .ico) from uploaded image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                shape:
+                  type: string
+                  enum: [square, circle]
+                bgColor:
+                  type: string
+                text:
+                  type: string
+                font:
+                  type: string
+                textColor:
+                  type: string
+      responses:
+        '200':
+          description: ZIP file with favicon PNGs and .ico
+          content:
+            application/zip: {}
+
+  /generates/favicon-text:
+    post:
+      tags:
+        - Generate
+      summary: Generate a favicon ZIP from text
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                shape:
+                  type: string
+                  enum: [square, circle]
+                bgColor:
+                  type: string
+                textColor:
+                  type: string
+                font:
+                  type: string
+      responses:
+        '200':
+          description: ZIP file with favicon PNGs and .ico
+          content:
+            application/zip: {}
+
+  /generates/logo-image:
+    post:
+      tags:
+        - Generate
+      summary: Generate a logo ZIP from uploaded image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                shape:
+                  type: string
+                  enum: [square, circle]
+                bgColor:
+                  type: string
+                text:
+                  type: string
+                font:
+                  type: string
+                textColor:
+                  type: string
+      responses:
+        '200':
+          description: ZIP file with logo PNGs
+          content:
+            application/zip: {}
+
+  /generates/logo-text:
+    post:
+      tags:
+        - Generate
+      summary: Generate a logo ZIP from text
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                shape:
+                  type: string
+                  enum: [square, circle]
+                bgColor:
+                  type: string
+                textColor:
+                  type: string
+                font:
+                  type: string
+      responses:
+        '200':
+          description: ZIP file with logo PNGs
+          content:
+            application/zip: {}
+
+  /generates/preview:
+    post:
+      tags:
+        - Generate
+      summary: Preview a single PNG icon (image or text based)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                text:
+                  type: string
+                font:
+                  type: string
+                bgColor:
+                  type: string
+                textColor:
+                  type: string
+                type:
+                  type: string
+                  enum: [favicon, logo]
+                mode:
+                  type: string
+                  enum: [text, image]
+                shape:
+                  type: string
+                  enum: [square, circle]
+      responses:
+        '200':
+          description: PNG image preview
+          content:
+            image/png: {}
+  /users/signup:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, country]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                country:
+                  type: string
+      responses:
+        '200':
+          description: User created and JWT token returned
+
+  /users/login:
+    post:
+      tags:
+        - Users
+      summary: Authenticate user and return JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authentication successful
+
+  /users/check-email:
+    get:
+      tags:
+        - Users
+      summary: Check if email already exists
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Whether the email exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+
+  /users/verify:
+    get:
+      tags:
+        - Users
+      summary: Verify user JWT token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+        '401':
+          description: Invalid or missing token
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: Get all users (optionally filter by email)
+      parameters:
+        - name: email
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    email:
+                      type: string
+                    country:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user (requires token)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User deleted successfully
+        '401':
+          description: Unauthorized
+
+  /users/forgot-password:
+    put:
+      tags:
+        - Users
+      summary: Reset password for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password updated
+        '404':
+          description: User not found

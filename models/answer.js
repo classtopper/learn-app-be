@@ -9,8 +9,8 @@ const Answer = sequelize.define('Answer', {
         autoIncrement: true,
         primaryKey: true
     },
-    title: {
-        type: DataTypes.STRING,
+    content: {
+        type: DataTypes.TEXT,
         allowNull: false
     }
 });

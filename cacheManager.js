@@ -105,7 +105,7 @@ const refreshCache = async () => {
     // Refresh Answer cache
     try {
         const answers = await Answer.findAll({
-            attributes: ['id', 'title', 'questionId'],
+            attributes: ['id', 'content', 'questionId'],
             order: [['id', 'ASC']]
         });
         const plainAnswers = JSON.parse(JSON.stringify(answers));
